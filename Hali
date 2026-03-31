@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Builder Pro - Clone</title>
+    <style>
+        /* CSS PHẦN GIAO DIỆN */
+        :root {
+            --primary-color: #00b894;
+            --secondary-color: #0984e3;
+            --bg-color: #dfe6e9;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 { text-align: center; color: #2d3436; margin-bottom: 30px; }
+
+        .form-section {
+            background: #f1f2f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 60px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            resize: none;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .option-item input[type="text"] {
+            flex-grow: 1;
+            border: none;
+            outline: none;
+            padding: 5px;
+            margin-left: 5px;
+        }
+
+        .btn-add {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 17px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+
+        .btn-add:hover { background: #00a884; transform: translateY(-2px); }
+
+        /* DANH SÁCH CÂU HỎI */
+        .preview-section { margin-top: 20px; }
+
+        .question-card {
+            background: white;
+            border: 1px solid #eee;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            position: relative;
+            border-left: 6px solid var(--secondary-color);
+        }
+
+        .question-card h3 { margin-top: 0; color: #2d3436; font-size: 18px; }
+
+        .ans-list { list-style: none; padding: 0; }
+        .ans-list li { padding: 5px 0; color: #636e72; }
+        .ans-list li.correct { color: var(--primary-color); font-weight: bold; }
+
+        .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff7675;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .export-btn {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            float: right;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📝 Exam Builder Online</h1>
+
+    <div class="form-section">
+        <textarea id="qText" placeholder="Nhập nội dung câu hỏi..."></textarea>
+        
+        <div class="options-grid">
+            <div class="option-item">
+                <input type="radio" name="correct" value="0" checked>
+                <input type="text" class="ans" placeholder="Đáp án A">
+            </div>
+            <div class="option-item">
+                <input type="radio" name="correct" value="1">
+                <input type="text" class="ans" placeholder="Đáp án B">
+            </div>
+            <div class="option-item">
+                <input type="radio" name="correct" value="2">
+                <input type="text" class="ans" placeholder="Đáp án C">
+            </div>
+            <div class="option-item">
+                <input type="radio" name="correct" value="3">
+                <input type="text" class="ans" placeholder="Đáp án D">
+            </div>
+        </div>
+
+        <button class="btn-add" onclick="addQuestion()">+ Thêm Vào Đề Thi</button>
+    </div>
+
+    <div class="preview-section">
+        <h2 id="counter">Số câu hỏi: 0</h2>
+        <div id="examList"></div>
+        <button class="export-btn" id="exportBtn" style="display:none;" onclick="exportJSON()">Xuất File JSON</button>
+    </div>
+</div>
+
+<script>
+    // JAVASCRIPT XỬ LÝ LOGIC
+    let questions = [];
+
+    function addQuestion() {
+        const text = document.getElementById('qText').value;
+        const ansInputs = document.querySelectorAll('.ans');
+        const correctIdx = document.querySelector('input[name="correct"]:checked').value;
+
+        // Kiểm tra nhập liệu
+        if (!text || Array.from(ansInputs).some(i => !i.value)) {
+            alert("Vui lòng nhập đủ câu hỏi và 4 đáp án!");
+            return;
+        }
+
+        const newQ = {
+            id: Date.now(),
+            question: text,
+            options: Array.from(ansInputs).map(i => i.value),
+            correct: parseInt(correctIdx)
+        };
+
+        questions.push(newQ);
+        render();
+        resetForm();
+    }
+
+    function deleteQuestion(id) {
+        questions = questions.filter(q => q.id !== id);
+        render();
+    }
+
+    function render() {
+        const list = document.getElementById('examList');
+        const counter = document.getElementById('counter');
+        const exportBtn = document.getElementById('exportBtn');
+        
+        list.innerHTML = '';
+        counter.innerText = `Số câu hỏi: ${questions.length}`;
+        
+        questions.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.innerHTML = `
+                <button class="delete-btn" onclick="deleteQuestion(${q.id})">Xóa</button>
+                <h3>Câu ${index + 1}: ${q.question}</h3>
+                <ul class="ans-list">
+                    <li class="${q.correct === 0 ? 'correct' : ''}">A. ${q.options[0]}</li>
+                    <li class="${q.correct === 1 ? 'correct' : ''}">B. ${q.options[1]}</li>
+                    <li class="${q.correct === 2 ? 'correct' : ''}">C. ${q.options[2]}</li>
+                    <li class="${q.correct === 3 ? 'correct' : ''}">D. ${q.options[3]}</li>
+                </ul>
+            `;
+            list.appendChild(card);
+        });
+
+        exportBtn.style.display = questions.length > 0 ? 'block' : 'none';
+    }
+
+    function resetForm() {
+        document.getElementById('qText').value = '';
+        document.querySelectorAll('.ans').forEach(i => i.value = '');
+    }
+
+    function exportJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(questions, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "exam_data.json");
+        downloadAnchor.click();
+    }
+</script>
+
+</body>
+</html>
